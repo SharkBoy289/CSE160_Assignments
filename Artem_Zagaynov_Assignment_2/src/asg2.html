@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Assignment 2 - 3D Animal</title>
+  <!-- WebGL Utility Scripts -->
+  <script src="../lib/webgl-utils.js"></script>
+  <script src="../lib/webgl-debug.js"></script>
+  <script src="../lib/cuon-utils.js"></script>
+  <script src="../lib/cuon-matrix.js"></script>
+  <!-- Your Assignment Scripts -->
+  <script src="asg2.js"></script>
+  <script src="../geometry/cube.js"></script>
+  <script src="../geometry/geometry.js"></script>
+  <script src="../geometry/triangle.js"></script>
+  <style>
+    body { background: #EEE; font-family: Arial, sans-serif; }
+    #controls { margin-top: 10px; }
+    #controls label { display: inline-block; width: 140px; }
+    .button-group { margin-top: 5px; }
+    #canvas-container { text-align: center; }
+    #performance { margin-top: 10px; font-weight: bold; }
+  </style>
+</head>
+<body onload="main()">
+  <h2>Assignment 2 - 3D Animal</h2>
+  
+  <div id="canvas-container">
+    <canvas id="webgl" width="600" height="600">
+      Your browser does not support the HTML5 canvas element.
+    </canvas>
+  </div>
+
+  <div id="controls">
+    <!-- Global Rotation Control -->
+    <div>
+      <label for="rotationSlider">Global Rotation</label>
+      <input type="range" id="rotationSlider" min="0" max="360" step="1" value="0">
+      <span id="rotationVal">0°</span>
+    </div>
+    <!-- Joint Controls -->
+    <div>
+      <label for="upperLegSlider">Upper Leg Angle</label>
+      <input type="range" id="upperLegSlider" min="-90" max="90" step="1" value="0">
+      <span id="upperLegVal">0°</span>
+    </div>
+    <div>
+      <label for="lowerLegSlider">Lower Leg Angle</label>
+      <input type="range" id="lowerLegSlider" min="-90" max="90" step="1" value="0">
+      <span id="lowerLegVal">0°</span>
+    </div>
+    <div>
+      <label for="footSlider">Foot Angle</label>
+      <input type="range" id="footSlider" min="-45" max="45" step="1" value="0">
+      <span id="footVal">0°</span>
+    </div>
+    <!-- Buttons for toggling animations -->
+    <div class="button-group">
+      <button id="animateButton">Toggle Animation</button>
+      <button id="pokeButton">Poke Animation</button>
+    </div>
+    <div class="button-group">
+      <button onclick="resetScene()">Reset Scene</button>
+    </div>
+    <!-- Performance Indicator -->
+    <div id="performance">
+      Performance: <span id="fps">0</span> fps
+    </div>
+  </div>
+</body>
+</html>
