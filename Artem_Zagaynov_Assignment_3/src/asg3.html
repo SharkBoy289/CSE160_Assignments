@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Assignment 3 - 3D World</title>
+  <!-- WebGL Utility Scripts -->
+  <script src="../lib/webgl-utils.js"></script>
+  <script src="../lib/webgl-debug.js"></script>
+  <script src="../lib/cuon-utils.js"></script>
+  <script src="../lib/cuon-matrix.js"></script>
+  <!-- Geometry files -->
+  <script src="../geometry/geometry.js"></script>
+  <script src="../geometry/triangle.js"></script>
+  <script src="../geometry/square.js"></script>
+  <script src="../geometry/cube.js"></script>
+  <script src="../geometry/quad.js"></script>
+  <!-- Camera and main scripts -->
+  <script src="camera.js"></script>
+  <script src="asg3.js"></script>
+  
+  <style>
+    body { background: #EEE; font-family: Arial, sans-serif; }
+    #controls { margin-top: 10px; }
+    #controls label { display: inline-block; width: 140px; }
+    .button-group { margin-top: 5px; }
+    #canvas-container { text-align: center; }
+    #performance { margin-top: 10px; font-weight: bold; }
+  </style>
+</head>
+<body onload="main()">
+  <h2>Assignment 3 - 3D World</h2>
+  <div id="canvas-container">
+    <canvas id="webgl" width="600" height="600">
+      Your browser does not support the HTML5 canvas element.
+    </canvas>
+  </div>
+  <div id="controls">
+    <!-- Global Rotation Control (if desired) -->
+    <div>
+      <label for="rotationSlider">Global Rotation</label>
+      <input type="range" id="rotationSlider" min="0" max="360" step="1" value="0">
+      <span id="rotationVal">0°</span>
+    </div>
+    <!-- Additional controls could go here -->
+    <div class="button-group">
+      <button onclick="createWorld()">Reset World</button>
+    </div>
+    <div id="performance">
+      Performance: <span id="fps">0</span> fps
+    </div>    
+    <div>
+      <p>
+        Use W/S to move forward/backward,<br>
+        A/D to strafe left/right,<br>
+        Q/E or mouse drag to turn,<br>
+        F to add a block, G to remove a block.
+      </p>
+    </div>
+    <!-- Performance indicator, story/game elements, etc. can be added as desired -->
+  </div>
+</body>
+</html>
