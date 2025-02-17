@@ -1,136 +1,198 @@
 // camera.js
 
-// Add helper methods to Vector3 if missing
-if (!Vector3.prototype.set) {
-    Vector3.prototype.set = function(v) {
-      this.elements[0] = v.elements[0];
-      this.elements[1] = v.elements[1];
-      this.elements[2] = v.elements[2];
-      return this;
-    };
+class Camera {
+  constructor(aspectRatio, near, far) {
+    this.fov = 60;
+    // The camera's eye represents the player's head.
+    // We want the head at y=2.0 so that the foot (eye.y - 1.0) is at y=1.0.
+    this.eye = new Vector3([8, 0, 25]);
+    this.at  = new Vector3([8, 0, 8]);
+    this.up  = new Vector3([0, 1, 0]);
+
+    // Horizontal momentum.
+    this.moveVelocity = new Vector3([0, 0, 0]);
+    this.acceleration = 30.0; // units per second²
+    this.friction = 5.0;      // friction factor
+
+    // Vertical momentum.
+    this.verticalVelocity = 0.0;
+    this.gravity = -0.015;
+    this.jumpStrength = 0.25;
+    this.isOnGround = true;
+
+    this.viewMatrix = new Matrix4();
+    this.projectionMatrix = new Matrix4();
+    this.projectionMatrix.setPerspective(this.fov, aspectRatio, near, far);
+    this.updateView();
   }
-  if (!Vector3.prototype.sub) {
-    Vector3.prototype.sub = function(v) {
-      this.elements[0] -= v.elements[0];
-      this.elements[1] -= v.elements[1];
-      this.elements[2] -= v.elements[2];
-      return this;
-    };
-  }
-  if (!Vector3.prototype.add) {
-    Vector3.prototype.add = function(v) {
-      this.elements[0] += v.elements[0];
-      this.elements[1] += v.elements[1];
-      this.elements[2] += v.elements[2];
-      return this;
-    };
-  }
-  if (!Vector3.prototype.mul) {
-    Vector3.prototype.mul = function(s) {
-      this.elements[0] *= s;
-      this.elements[1] *= s;
-      this.elements[2] *= s;
-      return this;
-    };
-  }
-  if (!Vector3.prototype.cross) {
-    Vector3.prototype.cross = function(v) {
-      let a = this.elements, b = v.elements;
-      let x = a[1]*b[2] - a[2]*b[1];
-      let y = a[2]*b[0] - a[0]*b[2];
-      let z = a[0]*b[1] - a[1]*b[0];
-      return new Vector3([x, y, z]);
-    };
-  }
-  if (!Vector3.prototype.normalize) {
-    Vector3.prototype.normalize = function() {
-      let e = this.elements;
-      let len = Math.sqrt(e[0]*e[0] + e[1]*e[1] + e[2]*e[2]);
-      if(len > 0.00001){
-        e[0] /= len; e[1] /= len; e[2] /= len;
+
+  // updateMovement: dt in seconds; blocks is array of collidable blocks.
+  // We update x and z separately.
+  updateMovement(dt, blocks) {
+    let forward = new Vector3(this.at.elements);
+    forward.sub(this.eye);
+    forward.elements[1] = 0;
+    forward.normalize();
+  
+    let left = this.up.cross(forward);
+    left.elements[1] = 0;
+    left.normalize();
+  
+    let accel = new Vector3([0, 0, 0]);
+    if (keysPressed['w']) accel.add(forward);
+    if (keysPressed['s']) accel.add(new Vector3(forward.elements).mul(-1));
+    if (keysPressed['a']) accel.add(left);
+    if (keysPressed['d']) accel.add(new Vector3(left.elements).mul(-1));
+    let aLen = Math.sqrt(accel.elements[0]**2 + accel.elements[1]**2 + accel.elements[2]**2);
+    if (aLen > 0.0001) {
+      accel.normalize().mul(this.acceleration);
+    }
+    this.moveVelocity.add(new Vector3([accel.elements[0] * dt, 0, accel.elements[2] * dt]));
+    let frictionFactor = Math.max(0, 1 - this.friction * dt);
+    this.moveVelocity.elements[0] *= frictionFactor;
+    this.moveVelocity.elements[2] *= frictionFactor;
+  
+    // Use a collision radius (for example, 0.5).
+    let cameraRadius = 0.5;
+  
+    // Save old positions for x and z.
+    let oldEyeX = this.eye.elements[0], oldAtX = this.at.elements[0];
+    let oldEyeZ = this.eye.elements[2], oldAtZ = this.at.elements[2];
+  
+    // Update x axis.
+    this.eye.elements[0] += this.moveVelocity.elements[0] * dt;
+    this.at.elements[0] += this.moveVelocity.elements[0] * dt;
+    for (let block of blocks) {
+      if (block.position) {
+        let blockTop = block.position.elements[1] + 0.5;
+        let playerFoot = this.eye.elements[1] - 1.0;
+        if (playerFoot < blockTop) {
+          if (Math.abs(this.eye.elements[0] - block.position.elements[0]) < (cameraRadius + 0.5) &&
+              Math.abs(this.eye.elements[2] - block.position.elements[2]) < 0.5) {
+            // On collision, simply revert x movement.
+            this.eye.elements[0] = oldEyeX;
+            this.at.elements[0] = oldAtX;
+            this.moveVelocity.elements[0] = 0;
+            break;
+          }
+        }
       }
-      return this;
-    };
+    }
+  
+    // Update z axis.
+    this.eye.elements[2] += this.moveVelocity.elements[2] * dt;
+    this.at.elements[2] += this.moveVelocity.elements[2] * dt;
+    for (let block of blocks) {
+      if (block.position) {
+        let blockTop = block.position.elements[1] + 0.5;
+        let playerFoot = this.eye.elements[1] - 1.0;
+        if (playerFoot < blockTop) {
+          if (Math.abs(this.eye.elements[2] - block.position.elements[2]) < (cameraRadius + 0.5) &&
+              Math.abs(this.eye.elements[0] - block.position.elements[0]) < 0.5) {
+            // Revert z movement.
+            this.eye.elements[2] = oldEyeZ;
+            this.at.elements[2] = oldAtZ;
+            this.moveVelocity.elements[2] = 0;
+            break;
+          }
+        }
+      }
+    }
+    this.updateView();
   }
   
-  class Camera {
-    constructor(aspectRatio, near, far) {
-        this.fov = 60;
-        // Start roughly above and behind the world center.
-        this.eye = new Vector3([8, 2.0, 25]);
-        // Look toward the center of the world (roughly at [8, 2.0, 8]).
-        this.at  = new Vector3([8, 2.0, 8]);
-        this.up  = new Vector3([0, 1, 0]);
-        this.moveSpeed = 0.2;   // adjust as needed
-        this.panAngle = 5;      // degrees for key presses
-        this.viewMatrix = new Matrix4();
-        this.projectionMatrix = new Matrix4();
-        this.projectionMatrix.setPerspective(this.fov, aspectRatio, near, far);
-        this.updateView();
-      }
+
+  // Rotation.
+  pan(angleDeg) {
+    let forward = new Vector3(this.at.elements);
+    forward.sub(this.eye);
+    let rotationMatrix = new Matrix4();
+    rotationMatrix.setRotate(angleDeg, this.up.elements[0], this.up.elements[1], this.up.elements[2]);
+    let newForward = rotationMatrix.multiplyVector3(forward);
+    this.at = new Vector3([
+      this.eye.elements[0] + newForward.elements[0],
+      this.eye.elements[1] + newForward.elements[1],
+      this.eye.elements[2] + newForward.elements[2]
+    ]);
+    this.updateView();
+  }
+  panLeft() { this.pan(5); }
+  panRight() { this.pan(-5); }
+
+  // Tilt the camera up/down by rotating the forward vector about the right axis.
+  // Constrain the pitch to between -80 and +80 degrees.
+  tilt(angleDeg) {
+    // Compute the current forward vector.
+    let forward = new Vector3(this.at.elements);
+    forward.sub(this.eye);
+    let length = Math.sqrt(forward.elements[0]**2 + forward.elements[1]**2 + forward.elements[2]**2);
+    forward.normalize();
     
-    // Moves the camera forward along its viewing direction.
-    moveForward() {
-      let f = new Vector3(this.at.elements);
-      f.sub(this.eye).normalize().mul(this.moveSpeed);
-      this.eye.add(f);
-      this.at.add(f);
-      this.updateView();
-    }
+    // Compute current pitch in degrees.
+    // pitch = arcsin(forward.y) in degrees.
+    let currentPitch = Math.asin(forward.elements[1]) * (180 / Math.PI);
     
-    // Moves the camera backwards.
-    moveBackwards() {
-      let f = new Vector3(this.at.elements);
-      f.sub(this.eye).normalize().mul(this.moveSpeed);
-      this.eye.sub(f);
-      this.at.sub(f);
-      this.updateView();
-    }
+    // Compute new pitch.
+    let newPitch = currentPitch + angleDeg;
+    // Clamp newPitch to [-80, 80].
+    newPitch = Math.max(-80, Math.min(80, newPitch));
     
-    // Strafes left (using the cross product of up and forward).
-    moveLeft() {
-      let f = new Vector3(this.at.elements);
-      f.sub(this.eye).normalize();
-      let side = this.up.cross(f).normalize().mul(this.moveSpeed);
-      this.eye.add(side);
-      this.at.add(side);
-      this.updateView();
-    }
+    // Also compute current yaw (angle in XZ plane).
+    // yaw = arctan2(forward.z, forward.x) in degrees.
+    let currentYaw = Math.atan2(forward.elements[2], forward.elements[0]) * (180 / Math.PI);
     
-    // Strafes right.
-    moveRight() {
-      let f = new Vector3(this.at.elements);
-      f.sub(this.eye).normalize();
-      let side = f.cross(this.up).normalize().mul(this.moveSpeed);
-      this.eye.add(side);
-      this.at.add(side);
-      this.updateView();
-    }
-    
-    // Rotates the camera horizontally by the given angle (in degrees).
-    pan(angle) {
-      let f = new Vector3(this.at.elements);
-      f.sub(this.eye);
-      let rotationMatrix = new Matrix4();
-      rotationMatrix.setRotate(angle, this.up.elements[0], this.up.elements[1], this.up.elements[2]);
-      let f_prime = rotationMatrix.multiplyVector3(f);
-      this.at = new Vector3([
-        this.eye.elements[0] + f_prime.elements[0],
-        this.eye.elements[1] + f_prime.elements[1],
-        this.eye.elements[2] + f_prime.elements[2]
-      ]);
-      this.updateView();
-    }
-    
-    panLeft() { this.pan(this.panAngle); }
-    panRight() { this.pan(-this.panAngle); }
-    
-    updateView() {
-        this.viewMatrix.setLookAt(
-          this.eye.elements[0], this.eye.elements[1], this.eye.elements[2],
-          this.at.elements[0], this.at.elements[1], this.at.elements[2],
-          this.up.elements[0], this.up.elements[1], this.up.elements[2]
-        );
+    // Convert newPitch and currentYaw back to a forward vector.
+    let newPitchRad = newPitch * Math.PI / 180;
+    let yawRad = currentYaw * Math.PI / 180;
+    let newForward = new Vector3([
+      Math.cos(newPitchRad) * Math.cos(yawRad),
+      Math.sin(newPitchRad),
+      Math.cos(newPitchRad) * Math.sin(yawRad)
+    ]);
+    // Scale newForward by the previous length.
+    newForward.mul(length);
+    // Update the at vector.
+    this.at = new Vector3(this.eye.elements);
+    this.at.add(newForward);
+    this.updateView();
+  }
+
+
+
+  jump() {
+    if (this.isOnGround) {
+      this.verticalVelocity = this.jumpStrength;
+      this.isOnGround = false;
     }
   }
-  
+
+  // updateGravity: always active.
+  updateGravity() {
+    // Always apply gravity.
+    this.verticalVelocity += this.gravity;
+    this.eye.elements[1] += this.verticalVelocity;
+    this.at.elements[1]  += this.verticalVelocity;
+    // Compute ground level at the player's current x,z.
+    let groundLevel = computeGroundLevel(this.eye.elements[0], this.eye.elements[2]);
+    // Desired head height = groundLevel + 1.0.
+    let desiredHead = groundLevel + 1.0;
+    if (this.eye.elements[1] < desiredHead) {
+      let diff = desiredHead - this.eye.elements[1];
+      this.eye.elements[1] = desiredHead;
+      this.at.elements[1] += diff;
+      this.verticalVelocity = 0;
+      this.isOnGround = true;
+    } else {
+      this.isOnGround = false;
+    }
+    this.updateView();
+  }
+
+  updateView() {
+    this.viewMatrix.setLookAt(
+      this.eye.elements[0], this.eye.elements[1], this.eye.elements[2],
+      this.at.elements[0],  this.at.elements[1],  this.at.elements[2],
+      this.up.elements[0],  this.up.elements[1],  this.up.elements[2]
+    );
+  }
+}
