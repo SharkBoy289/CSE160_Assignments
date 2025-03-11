@@ -2,7 +2,7 @@
 <html>
 <head>
   <meta charset="utf-8">
-  <title>Assignment 5: Animation with Phong Shading & Spotlight</title>
+  <title>Assignment 4: Textured World with Phong Shading & Dynamic Light</title>
   <style>
     canvas { border: 1px solid black; }
     #controls { margin-top: 10px; }
@@ -17,14 +17,15 @@
     <button id="toggleSpotlight">Toggle Spotlight</button>
     <label for="lightColor">Light Color:</label>
     <input type="color" id="lightColor" value="#ffffff">
-    <label for="lightPosSlider">Light Position:</label>
+    <label for="lightPosSlider">Light Position Angle:</label>
     <input type="range" id="lightPosSlider" min="0" max="360" value="0">
   </div>
-
+  
   <!-- Vertex Shader -->
   <script id="vertex-shader" type="x-shader/x-vertex">
     attribute vec4 a_Position;
     attribute vec3 a_Normal;
+    attribute vec2 a_TexCoord;
     
     uniform mat4 u_ModelMatrix;
     uniform mat4 u_ViewMatrix;
@@ -33,14 +34,16 @@
     
     varying vec3 v_Normal;
     varying vec3 v_FragPos;
+    varying vec2 v_TexCoord;
     
     void main() {
       gl_Position = u_ProjMatrix * u_ViewMatrix * u_ModelMatrix * a_Position;
       v_FragPos = vec3(u_ModelMatrix * a_Position);
       v_Normal = normalize(vec3(u_NormalMatrix * vec4(a_Normal, 0.0)));
+      v_TexCoord = a_TexCoord;
     }
   </script>
-
+  
   <!-- Fragment Shader -->
   <script id="fragment-shader" type="x-shader/x-fragment">
     precision mediump float;
@@ -57,8 +60,9 @@
     uniform vec3 u_SpotLightPosition;
     uniform vec3 u_SpotLightDirection;
     uniform vec3 u_SpotLightColor;
-    uniform float u_SpotCutoff; // cosine of cutoff angle
+    uniform float u_SpotCutoff; // cosine cutoff angle
     
+    // Lighting toggles
     uniform bool u_UseLighting;
     uniform bool u_UseNormalVisualization;
     
@@ -68,62 +72,70 @@
     uniform vec3 u_MaterialSpecular;
     uniform float u_MaterialShininess;
     
+    // Texture
+    uniform bool u_UseTexture;
+    uniform sampler2D u_Sampler;
+    
     varying vec3 v_Normal;
     varying vec3 v_FragPos;
+    varying vec2 v_TexCoord;
     
     void main() {
-      vec3 color;
-      if(u_UseNormalVisualization) {
-          // Visualize normals (mapping from [-1,1] to [0,1])
-          color = (v_Normal * 0.5) + 0.5;
-      } else {
-          color = u_MaterialDiffuse;
+      vec3 baseColor = u_MaterialDiffuse;
+      if(u_UseTexture) {
+        baseColor = texture2D(u_Sampler, v_TexCoord).rgb;
       }
       
-      if(u_UseLighting) {
-        vec3 norm = normalize(v_Normal);
-        vec3 viewDir = normalize(u_ViewPosition - v_FragPos);
-        vec3 result = vec3(0.0);
-        
-        // Ambient component (same for all lights)
-        vec3 ambient = u_MaterialAmbient * color;
-        
-        // --- Point Light Calculation ---
-        if(u_PointLightOn) {
-          vec3 lightDir = normalize(u_PointLightPosition - v_FragPos);
-          float diff = max(dot(norm, lightDir), 0.0);
-          vec3 diffuse = diff * u_PointLightColor * color;
-          vec3 reflectDir = reflect(-lightDir, norm);
-          float spec = pow(max(dot(viewDir, reflectDir), 0.0), u_MaterialShininess);
-          vec3 specular = u_MaterialSpecular * spec * u_PointLightColor;
-          result += ambient + diffuse + specular;
-        }
-        
-        // --- Spotlight Calculation ---
-        if(u_SpotLightOn) {
-          vec3 spotDir = normalize(u_SpotLightPosition - v_FragPos);
-          float theta = dot(spotDir, normalize(-u_SpotLightDirection));
-          if(theta > u_SpotCutoff) { // inside spotlight cone
-            float diff = max(dot(norm, spotDir), 0.0);
-            vec3 diffuse = diff * u_SpotLightColor * color;
-            vec3 reflectDir = reflect(-spotDir, norm);
-            float spec = pow(max(dot(viewDir, reflectDir), 0.0), u_MaterialShininess);
-            vec3 specular = u_MaterialSpecular * spec * u_SpotLightColor;
-            result += ambient + diffuse + specular;
-          } else {
-            result += ambient;
-          }
-        }
-        
-        gl_FragColor = vec4(result, 1.0);
-      } else {
-        gl_FragColor = vec4(color, 1.0);
+      if(u_UseNormalVisualization) {
+        baseColor = (v_Normal * 0.5) + 0.5;
+        gl_FragColor = vec4(baseColor, 1.0);
+        return;
       }
+      
+      if(!u_UseLighting) {
+        gl_FragColor = vec4(baseColor, 1.0);
+        return;
+      }
+      
+      vec3 norm = normalize(v_Normal);
+      vec3 viewDir = normalize(u_ViewPosition - v_FragPos);
+      vec3 result = vec3(0.0);
+      vec3 ambient = u_MaterialAmbient * baseColor;
+      
+      // Point Light
+      if(u_PointLightOn) {
+        vec3 lightDir = normalize(u_PointLightPosition - v_FragPos);
+        float diff = max(dot(norm, lightDir), 0.0);
+        vec3 diffuse = diff * u_PointLightColor * baseColor;
+        vec3 reflectDir = reflect(-lightDir, norm);
+        float spec = pow(max(dot(viewDir, reflectDir), 0.0), u_MaterialShininess);
+        vec3 specular = u_MaterialSpecular * spec * u_PointLightColor;
+        result += ambient + diffuse + specular;
+      }
+      
+      // Spotlight
+      if(u_SpotLightOn) {
+        vec3 spotDir = normalize(u_SpotLightPosition - v_FragPos);
+        float theta = dot(spotDir, normalize(-u_SpotLightDirection));
+        if(theta > u_SpotCutoff) {
+          float diff = max(dot(norm, spotDir), 0.0);
+          vec3 diffuse = diff * u_SpotLightColor * baseColor;
+          vec3 reflectDir = reflect(-spotDir, norm);
+          float spec = pow(max(dot(viewDir, reflectDir), 0.0), u_MaterialShininess);
+          vec3 specular = u_MaterialSpecular * spec * u_SpotLightColor;
+          result += ambient + diffuse + specular;
+        } else {
+          result += ambient;
+        }
+      }
+      
+      gl_FragColor = vec4(result, 1.0);
     }
   </script>
   
   <!-- Include required scripts -->
   <script src="../lib/cuon-matrix.js"></script>
+  <script src="../lib/cuon-utils.js"></script>
   <script src="camera.js"></script>
   <script src="../models/model.js"></script>
   <script src="../models/cube.js"></script>
