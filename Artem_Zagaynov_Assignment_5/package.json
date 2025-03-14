@@ -1,6 +1,6 @@
 {
   "name": "minecraft-test-2",
-  "homepage": "https://sharkboy289.github.io/CSE160_Assignments/Artem_Zagaynov_Assignment_5/",
+  "homepage": "https://sharkboy289.github.io/CSE160_Assignments/Artem_Zagaynov_Assignment_5/index.html",
   "private": true,
   "version": "0.0.0",
   "type": "module",
@@ -9,7 +9,7 @@
     "build": "vite build",
     "preview": "vite preview --host 127.0.0.1",
     "predeploy": "npm run build",
-    "deploy": "gh-pages -d dist"
+    "deploy": "gh-pages -d dist -r https://github.com/SharkBoy289/CSE160_Assignments.git"
   },
   "devDependencies": {
     "gh-pages": "^6.3.0",

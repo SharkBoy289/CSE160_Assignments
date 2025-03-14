@@ -12,7 +12,6 @@ export default {
   base: '/CSE160_Assignments/Artem_Zagaynov_Assignment_5/',
 
   build: {
-    outDir: 'docs',   // Output built files to "docs" folder
     sourcemap: true,
   },
 
