@@ -1,7 +1,7 @@
 // scripts/main.js
 import * as THREE from 'three';
 import Stats from 'three/examples/jsm/libs/stats.module.js';
-import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
 import { World } from './world.js';
 import { Player } from './player.js';
 import { Physics } from './physics.js';
