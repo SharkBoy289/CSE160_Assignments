@@ -12,6 +12,7 @@ export default {
 
   build: {
     sourcemap: true,
+    outDir: 'dist'
   },
 
   // (Optional) Force bundling of certain modules like three.js
