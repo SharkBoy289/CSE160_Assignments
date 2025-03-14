@@ -9,7 +9,6 @@ export default {
   // https://sharkboy289.github.io/CSE160_Assignments/Artem_Zagaynov_Assignment_5/
   // your base is "/CSE160_Assignments/Artem_Zagaynov_Assignment_5/"
 
-  base: '/CSE160_Assignments/Artem_Zagaynov_Assignment_5/',
 
   build: {
     sourcemap: true,
