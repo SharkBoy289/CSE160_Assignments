@@ -4,7 +4,6 @@
 export default {
   base: '/CSE160_Assignments/Artem_Zagaynov_Assignment_5/',
   build: {
-    outDir: "public",
     sourcemap: true,
   },
   // (Optional) Force bundling of three to avoid bare module errors:
