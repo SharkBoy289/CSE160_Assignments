@@ -1,5 +1,5 @@
 // scripts/main.js
-import * as THREE from 'three';
+import * as THREE from '/node_module/three';
 import Stats from '/node_modules/three/examples/jsm/libs/stats.module.js';
 import { OrbitControls } from '/node_modules/three/examples/jsm/controls/OrbitControls.js';
 import { World } from './world.js';
