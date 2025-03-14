@@ -6,7 +6,7 @@
   "scripts": {
     "dev": "vite --host 127.0.0.1",
     "build": "vite build",
-    "deploy": "gh-pages -d dist",
+    "deploy": "gh-pages -d dist -b main",
     "preview": "vite preview --host 127.0.0.1"
   },
   "devDependencies": {
