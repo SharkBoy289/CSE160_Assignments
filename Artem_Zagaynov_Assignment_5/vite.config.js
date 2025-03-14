@@ -15,13 +15,4 @@ export default {
     outDir: 'dist'
   },
 
-  // (Optional) Force bundling of certain modules like three.js
-  // to avoid "bare module specifier" errors:
-  optimizeDeps: {
-    include: [
-      'three',
-      'three/examples/jsm/libs/stats.module.js',
-      'three/addons/controls/OrbitControls.js'
-    ]
-  }
 }
