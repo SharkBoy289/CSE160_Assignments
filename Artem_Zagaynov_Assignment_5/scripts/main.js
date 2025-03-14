@@ -1,4 +1,5 @@
 // scripts/main.js
+console.log("import 3 incompleted");
 import * as THREE from 'three';
 console.log("import 3 completed");
 import Stats from '/node_modules/three/examples/jsm/libs/stats.module.js';
