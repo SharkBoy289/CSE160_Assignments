@@ -1,56 +1,39 @@
 /* camera.js */
-// A simple Camera class that supports view updates and basic pan/tilt/jump controls.
-var Camera = function(aspect, near, far) {
-  this.eye = new Vector3([8, 2.0, 25]);
-  this.at = new Vector3([8, 2.0, 8]);
-  this.up = new Vector3([0, 1, 0]);
+var Camera = function() {
+  // Initial eye position, looking at the origin with up along Y
+  this.eye = [0, 3, 8];
+  this.center = [0, 0, 0];
+  this.up = [0, 1, 0];
   this.viewMatrix = new Matrix4();
-  this.projectionMatrix = new Matrix4();
-  this.projectionMatrix.setPerspective(45, aspect, near, far);
-  
-  // For movement
-  this.verticalVelocity = 0;
-  this.gravity = -0.02;
-  this.isOnGround = false;
 };
 
-Camera.prototype.updateView = function() {
+Camera.prototype.update = function() {
   this.viewMatrix.setLookAt(
-    this.eye.elements[0], this.eye.elements[1], this.eye.elements[2],
-    this.at.elements[0], this.at.elements[1], this.at.elements[2],
-    this.up.elements[0], this.up.elements[1], this.up.elements[2]
+    this.eye[0], this.eye[1], this.eye[2],
+    this.center[0], this.center[1], this.center[2],
+    this.up[0], this.up[1], this.up[2]
   );
 };
 
-Camera.prototype.pan = function(angleDegrees) {
-  // Rotate the eye position around the at point about the y-axis.
-  var angle = angleDegrees * Math.PI / 180;
-  var dirX = this.eye.elements[0] - this.at.elements[0];
-  var dirZ = this.eye.elements[2] - this.at.elements[2];
-  var cosA = Math.cos(angle);
-  var sinA = Math.sin(angle);
-  var newX = dirX * cosA - dirZ * sinA;
-  var newZ = dirX * sinA + dirZ * cosA;
-  this.eye.elements[0] = this.at.elements[0] + newX;
-  this.eye.elements[2] = this.at.elements[2] + newZ;
-  this.updateView();
+Camera.prototype.getViewMatrix = function() {
+  this.update();
+  return this.viewMatrix;
 };
 
-Camera.prototype.tilt = function(angleDegrees) {
-  // Simple tilt: adjust the eye's y coordinate.
-  var delta = angleDegrees * 0.05;
-  this.eye.elements[1] += delta;
-  this.updateView();
-};
-
-Camera.prototype.jump = function() {
-  if(this.isOnGround) {
-    this.verticalVelocity = 0.5;
-    this.isOnGround = false;
+Camera.prototype.handleKeyDown = function(event) {
+  var step = 0.5;
+  switch(event.key) {
+    case 'ArrowUp':
+      this.eye[2] -= step;
+      break;
+    case 'ArrowDown':
+      this.eye[2] += step;
+      break;
+    case 'ArrowLeft':
+      this.eye[0] -= step;
+      break;
+    case 'ArrowRight':
+      this.eye[0] += step;
+      break;
   }
-};
-
-Camera.prototype.updateMovement = function(dt, blocks) {
-  // (A placeholder for collision handling and movement updates.)
-  // For now, we leave this empty.
 };
