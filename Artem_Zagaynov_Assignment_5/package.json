@@ -9,7 +9,7 @@
     "build": "vite build",
     "preview": "vite preview --host 127.0.0.1",
     "predeploy": "npm run build",
-    "deploy": "npx gh-pages -d Artem_Zagaynov_Assignment_5/dist -r https://github.com/SharkBoy289/CSE160_Assignments.git"
+    "deploy": "npx gh-pages -d dist"
   },
   "devDependencies": {
     "gh-pages": "^6.3.0",
