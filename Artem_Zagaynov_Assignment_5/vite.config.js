@@ -14,6 +14,8 @@ export default {
     base:'/CSE160_Assignments/Artem_Zagaynov_Assignment_5/',
     sourcemap: true,
     outDir: 'dist',
+    rollupOptions: {
+      external:[]
+    },
   },
-
 }
