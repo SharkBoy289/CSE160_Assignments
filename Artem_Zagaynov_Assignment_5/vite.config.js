@@ -11,7 +11,7 @@ export default {
 
 
   build: {
-    base:'/CSE160_Assignments/Artem_Zagaynov_Assignment_5/',
+    base:'/Artem_Zagaynov_Assignment_5/',
     sourcemap: true,
     outDir: 'dist',
     rollupOptions: {
