@@ -13,7 +13,7 @@ export default {
   build: {
     base:'/Artem_Zagaynov_Assignment_5/',
     sourcemap: true,
-    outDir: 'docs/Artem_Zagaynov_Assignment_5',
+    outDir: 'dist',
     rollupOptions: {
       external:[]
     },
